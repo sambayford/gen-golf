@@ -87,26 +87,26 @@
     pointer-events:none; opacity:0; transition:opacity 0.12s;
   }
   #pad-origin.active { opacity:1; }
+  #btn-row {
+    display:flex; gap:10px; align-items:stretch; margin-top:7px;
+  }
+  #next-btn, #restart-btn {
+    border-radius:12px; font-family:'Fredoka One',cursive;
+    font-size:clamp(0.78rem,3vw,1.05rem); padding:8px 22px; cursor:pointer;
+    transition:transform 0.1s, box-shadow 0.1s;
+  }
   #next-btn {
-    margin-top:7px; background:linear-gradient(135deg,#3ddc6b,#20a84a); border:none;
-    border-radius:12px; color:#fff; font-family:'Fredoka One',cursive;
-    font-size:clamp(0.78rem,3vw,1.05rem); padding:7px 22px; cursor:pointer;
-    box-shadow:0 4px 14px rgba(61,220,107,0.4);
-    transition:transform 0.1s, box-shadow 0.1s; display:none;
+    background:linear-gradient(135deg,#3ddc6b,#20a84a); border:none;
+    color:#fff; box-shadow:0 4px 14px rgba(61,220,107,0.4); display:none;
   }
   #next-btn:hover { transform:translateY(-2px); box-shadow:0 6px 18px rgba(61,220,107,0.5); }
   #next-btn:active { transform:translateY(0); }
-  #btn-row {
-    display:flex; gap:10px; align-items:center; margin-top:7px;
-  }
   #restart-btn {
     background:rgba(0,0,0,0.35); border:1.5px solid rgba(255,255,255,0.18);
-    border-radius:12px; color:rgba(255,255,255,0.7); font-family:'Fredoka One',cursive;
-    font-size:clamp(0.7rem,2.5vw,0.92rem); padding:7px 16px; cursor:pointer;
-    transition:transform 0.1s, background 0.15s, color 0.15s;
+    color:rgba(255,255,255,0.7);
   }
-  #restart-btn:hover { background:rgba(220,60,60,0.35); color:#fff; border-color:rgba(220,100,100,0.5); }
-  #restart-btn:active { transform:scale(0.96); }
+  #restart-btn:hover { background:rgba(220,60,60,0.35); color:#fff; border-color:rgba(220,100,100,0.5); transform:translateY(-2px); }
+  #restart-btn:active { transform:translateY(0); }
   /* Confirmation modal */
   #confirm-overlay {
     display:none; position:fixed; inset:0; z-index:100;
@@ -155,7 +155,7 @@
     <div class="hud-pill">Total <span id="total-score">0</span></div>
   </div>
   <div id="game-wrap">
-    <canvas id="c" width="480" height="360"></canvas>
+    <canvas id="c" width="480" height="480"></canvas>
     <div id="msg"></div>
   </div>
   <div id="drag-pad">
@@ -181,7 +181,7 @@
   </div>
 </div>
 <script>
-const GW=480, GH=360;
+const GW=480, GH=480;
 const canvas = document.getElementById('c');
 const ctx = canvas.getContext('2d');
 let scale = 1;
@@ -206,7 +206,7 @@ let holeIdx=0, totalScore=0, shots=0;
 let waterFlash=0, waterAnim=0;
 let currentHole = null;
 
-const COLS=8, ROWS=6;
+const COLS=8, ROWS=8;
 const TW=GW/COLS, TH=GH/ROWS;
 
 function rng(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
@@ -625,21 +625,26 @@ function drawHole(){
 function resize(){
   const h1  = document.querySelector('h1');
   const hud = document.getElementById('hud');
-  const btn = document.getElementById('next-btn');
+  const btnRow = document.getElementById('btn-row');
   const topUI = h1.offsetHeight + hud.offsetHeight + 14;
-  const botUI = btn.offsetHeight + 12;
-  const padH  = Math.max(75, Math.min(120, Math.floor((window.innerHeight-topUI-botUI)*0.22)));
+  const botUI = btnRow.offsetHeight + 14;
+  const gap = 8; // gap between game and pad
   const availW = window.innerWidth - 16;
-  const availH = window.innerHeight - topUI - botUI - padH - 20;
-  const s = Math.min(availW/GW, availH/GH, 2);
-  scale = s;
-  canvas.style.transform = 'scale('+s+')';
+  // Both game and pad are square (GW x GW), stacked vertically with a gap
+  // totalH needed = GW*sf + gap + GW*sf = 2*GW*sf + gap
+  // availH = window.innerHeight - topUI - botUI - gap
+  const availH = window.innerHeight - topUI - botUI - gap;
+  // sf = min(availW/GW, availH/(2*GW))
+  const sf = Math.min(availW / GW, availH / (2 * GW), 2);
+  scale = sf;
+  const sz = Math.round(GW * sf);
+  canvas.style.transform = 'scale('+sf+')';
   canvas.style.transformOrigin = 'top left';
   const wrap = document.getElementById('game-wrap');
-  wrap.style.width  = (GW*s)+'px';
-  wrap.style.height = (GH*s)+'px';
-  pad.style.width   = (GW*s)+'px';
-  pad.style.height  = padH+'px';
+  wrap.style.width  = sz+'px';
+  wrap.style.height = sz+'px';
+  pad.style.width   = sz+'px';
+  pad.style.height  = sz+'px';
 }
 window.addEventListener('resize', resize);
 
