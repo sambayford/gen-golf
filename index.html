@@ -704,7 +704,17 @@ function shoot(){
 /* ---- game loop ---- */
 function tick(){
   if(rolling && currentHole){
-    ball.x+=ball.vx; ball.y+=ball.vy;
+    /* move in sub-steps smaller than the ball radius so a fast shot
+       can't jump clean over a thin wall segment in a single frame
+       (this was letting the ball tunnel out of bounds) */
+    const moveDist = Math.hypot(ball.vx, ball.vy);
+    const steps = Math.max(1, Math.ceil(moveDist / (ball.r*0.5)));
+    const stepVx = ball.vx/steps, stepVy = ball.vy/steps;
+    for(let i=0;i<steps;i++){
+      ball.x+=stepVx; ball.y+=stepVy;
+      circleLineReflect(ball, currentHole.walls);
+      circleObstacleReflect(ball, currentHole.obstacles);
+    }
 
     /* friction — sand or normal */
     let friction = FRICTION_NORMAL;
@@ -714,9 +724,6 @@ function tick(){
       }
     }
     ball.vx*=friction; ball.vy*=friction;
-
-    circleLineReflect(ball, currentHole.walls);
-    circleObstacleReflect(ball, currentHole.obstacles);
 
     /* water — reset to start */
     for(const w of currentHole.waterHazards){
